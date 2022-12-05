@@ -1,0 +1,3 @@
+Aaronsson;Matthew;068-45452323;aar@mat.se;Strandvägen 1, Stockholm
+Ljungström;Linus;1233-1223;lljung@kth.se;stockholmsvägen 12
+Bengtsson;Lolo;1235-1233;lolo@bengtsson.se;Krokaviksvägen 75C

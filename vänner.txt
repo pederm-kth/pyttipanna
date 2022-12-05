@@ -1,0 +1,4 @@
+Bengtsson;Lolo;1235-1233;lolo@bengtsson.se;Krokaviksvägen 75C
+Carling;Harald;14314314;kth@kth.se;123123
+Lindström;Valter;123213123;vlindooooooofofo@kth.se;Banergatan 12
+Aaronsson;Matthew;068-45452323;aar@mat.se;Strandvägen 1, Stockholm
