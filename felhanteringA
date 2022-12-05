@@ -1,0 +1,45 @@
+import re
+
+def epost(entry):
+    while True:
+            validator = bool(re.match(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', entry)) #Regex kriterier som godkänner inmatning med True.
+            if validator == True:                                                                     #Ifall false så kommer inmatning att prövas igen.
+                return True
+            else:
+                return False
+
+def adress(entry):
+    while True:
+            validator = bool(re.match('^[åäöÅÄÖA-Za-z0-9]+\s*[åäöÅÄÖA-Za-z0-9 ]+$', entry))    
+            if validator == True:
+                return True
+            else:
+                return False
+
+def namn(entry):
+    """Funktionen kontrollerar ifall variabeln består av endast en sträng"""
+    entry = entry.replace("-", " ")
+    while True:
+            validator = bool(re.match('^[åäöÅÄÖA-Za-z]+\s*[åäöÅÄÖA-Za-z ]+$', entry))
+             
+            if validator == True:
+                return True
+            else:
+                return False
+    
+def telefonnummer(entry):
+    """Funktionen kontrollerar ifall variabeln är ett heltal med siffror"""
+    while True:
+            validator = bool(re.match('^[0-9-]+$', entry))    
+            if validator == True:
+                return True
+            else:
+                return False
+
+def register(entry):
+    while True:
+            validator = bool(re.match(r'\b[åäöÅÄÖA-Za-z0-9-_]+\.[tx]{3,3}\b', entry))
+            if validator == True:
+                return True
+            else:
+                return False
