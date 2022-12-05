@@ -1,0 +1,567 @@
+import felhanteringA
+import tkinter as tk
+
+class Kontakt:
+    """En klass som hanterar kontaktobjekt"""
+    def __init__(self, efternamn, förnamn, telefonnummer, epost, adress):
+        """Konstruktor som skapar kontaktobjekt"""
+        self.efternamn = efternamn              #skapar ett attribut som motsvarar kontaktobjektets efternamn
+        self.förnamn = förnamn                  #"--------------------------------------------------"förnman
+        self.telefonnummer = telefonnummer      #"--------------------------------------------------"telefonnummer
+        self.epost = epost                      #"--------------------------------------------------"epost
+        self.adress = adress                    #"--------------------------------------------------"adress
+
+    def __str__(self):
+        """Strängrepresentation utav kontaktobjekten. Används för att spara till fil."""
+        return f"{self.efternamn};{self.förnamn};{self.telefonnummer};{self.epost};{self.adress}".strip()
+    
+    def utskriftsFormat(self):
+        """Strängrepresentation utav kontaktobjekten. Används för att skriva ut"""
+        return f"{self.efternamn: <15}{self.förnamn : <15}{self.telefonnummer : <20}{self.epost : <40}{self.adress : <40}".strip()
+        
+    def __lt__(self, other):
+        """En inbyggd dunder/super-metod som anropas då sorted() används inom klassen"""
+        if self.efternamn <= other.efternamn:   #Jämför kontakt-objektens attribut efternamn efter alfabetisk ordning (A till Ö)
+            return True
+        else:
+            return False
+
+class Register:
+    """En klass som hanterar registerobjekt"""
+    def __init__(self):
+        """En konstruktor som skapar olika uppgifteributet kopplade till hanteringen av registerna"""
+        self.behållare = {}      #Skapar en tom dictionary som anropas då self.behållare inom klass eller register.behållare utanför klass.
+        self.kontakter = None    #Skapar en tom variabel som används för att spara temporära värden under programmets gång.
+        self.inmatning = None    #"--------------------------------------------------------------------------------------"
+    
+
+    def läs_register(self):
+        """En metod som läser in de olika registerna (textfilerna) från en annan textfil 'register.txt' """
+        while True:
+            try:
+                with open("register.txt", "r", encoding="utf-8") as fil:                #encoding="utf-8" tillåter åäöÅÄÖ.
+                    for register_namn in fil:                               
+                        self.behållare[register_namn.strip()] = None                    #Value förblir None tills rad 59.
+                    break
+            except FileNotFoundError:  
+                self.inmatning = True                                                   #Ifall textfilen "register.txt" inte existerar i samma mapp som programmet så kommer ett boolsktvärde värde returneras till rad 534, till slut så kommer en errorsida att visas.
+                break
+
+    def läs_filer(self):    
+        """En metod som läser varje enskilt register (textfil) och populerar det som value i mainDict kopplat till sin nyckel. Value blir en nestad dict, register_kontakter"""
+        while True:
+            try:
+                for register_namn, register_kontakter in self.behållare.items():
+                    with open(register_namn, "r", encoding="utf-8") as fil:
+                        register_kontakter = {}
+                        for kontakt in fil:
+                            uppgifter = kontakt.split(";")                                                                      #Radinformationen (uppgifteributen) splittas med separatorn ';'. Skapar samtidigt en lista uppgifter där varje uppgifteribut sparas.
+                            kontakt = Kontakt(uppgifter[0], uppgifter[1], uppgifter[2], uppgifter[3], uppgifter[4].strip())     #Skapar ett nytt kontaktobjekt med de nya uppgifteributen. Kontaktobjektet fästs i variabeln kontakt för att utnyttjas nedan:
+                            register_kontakter[f"{kontakt.förnamn} {kontakt.efternamn}"] = kontakt                              #Skapar en ny nyckel med uppgifteributen för- och efternamn som nyckel; kontaktobjektet som value
+                            register_kontakter[kontakt.telefonnummer] = kontakt                                                 #"---------------------------------"telefonnummer     "------------------------------------"
+                            register_kontakter[kontakt.epost] = kontakt                                                         #"---------------------------------"epost             "------------------------------------"
+                        self.behållare[register_namn] = register_kontakter                                                      #Populerar mainDict med det nya nestade register_kontakter.
+                break
+            except FileNotFoundError:                                                                                           #Ifall textfilen (radinformationen) från en viss rad i "register.txt" inte existerar i samma mapp som programmet så kommer ett boolsktvärde värde returneras till rad 535.
+                self.kontakter = register_namn
+                self.inmatning = True                                                                                           #Utnyttjar temporär variabel-register_kontakter för att presentera vilken textfil som inte existerar i samma mapp.
+                break
+
+    def spara_register(self):
+        """En metod som sparar ner de befintliga och eventuella nya register i textfilen 'register.txt'"""
+        with open("register.txt", "w", encoding="utf-8") as regFil:
+            for register_namn, register_kontakter in self.behållare.items():
+                regFil.write('%s\n' % register_namn)                            #Sparar ner varje register rad för rad i textfilen "register.txt".
+    
+    def spara_filer(self):
+        """En metod som sparar varje ändring som skett i varje enskilt register"""
+        for register_namn, register_kontakter in self.behållare.items():
+            with open(register_namn, "w", encoding="utf-8") as fil:
+                register_kontakter = set(register_kontakter.values())           #Eftersom set() är oordnad så tas två av de tredubbla kontaktobjekten bort, kvar blir en instans av kontaktobjektet
+                for kontakt in register_kontakter:
+                    fil.write('%s\n' % kontakt)                                 #Sparar ned varje kontakt rad för rad med format enligt __str__ på rad 14.
+    
+    def skapa_fil(self):
+        """En metod som skapar ett nytt register i mainDict och en ny textfil"""
+        for register_namn, register_kontakter in self.behållare.items():    
+            if register_namn != self.inmatning:                                 #self.inmatning = inmatning för nytt filnamn
+                break                                                       
+        self.behållare[self.inmatning.strip()] = {}                         
+        with open(self.inmatning, "w", encoding="utf-8") as fil:            
+            pass                                                            
+
+    def formatering_union_snitt(self):
+        """En metod som formatterar unionen av två dictionaries"""
+        if self.inmatning[2] == True:                                           #self.inmatning[2] = boolskt värde. True ger alternativ Union.
+            register_union = self.behållare[self.inmatning[1]].copy()           #self.inmatning[1] = det andra valda registret. använder copy() så att self.behållare inte ska påverkas utav nästa rad kod.
+            register_union.update(self.behållare[self.inmatning[0]])            #self.inmatning[0] = det första valda registret. OBS! register_union är lika med de två valda registerena, självaste unionen uppstår på rad 113.
+            self.kontakter = register_union                                     #Detta så att register_union kan användas på rad 107.
+        else:                                                               
+            register_snitt = {k: self.behållare[self.inmatning[1]][k]           #register_snitt är lika med snittet av de båda valda registerna
+                              for k in self.behållare[self.inmatning[1]]
+                              if k in self.behållare[self.inmatning[0]]}
+            self.kontakter = register_snitt                                     #Detta så att register_snitt kan användas på rad 107.
+
+    def formatering_utskrift(self):
+        """Från vald register_kontakter så sorteras kontaktobjektens uppgifteribut efternamn efter alfabetisk ordning (A till Ö). Sedan görs register_kontakter till utskriftsformat"""
+        register_kontakter_unikt = sorted(set(self.kontakter.values()))         #Ty rad 80 så skrivs endast ett av de sparade kontaktobjekten ut. Här så sker även unionen av de valda registerna. OBS! Snittet påverkas ej.
+        utskrift = ""                                       
+        i=0                                                 
+        for kontakt in register_kontakter_unikt:                                #loopen förvandlar från set till ett utskriftsbart strängformat
+            utskrift =f"{utskrift}\n{kontakt.efternamn: <15}{kontakt.förnamn : <15}{kontakt.telefonnummer : <20}{kontakt.epost : <40}{kontakt.adress : <40}".strip()
+            i += 1                                          
+        return utskrift                                                         #returnerar utskriften till rad 412
+
+    def skapa_kontakt(self):
+        """En metod som skapar nytt kontaktobjekt och populerar till register_kontakter"""
+        kontakt = Kontakt(register.inmatning[0], register.inmatning[1], register.inmatning[2], register.inmatning[3], register.inmatning[4])
+        self.kontakter[f"{kontakt.förnamn} {kontakt.efternamn}"] = kontakt
+        self.kontakter[kontakt.telefonnummer] = kontakt
+        self.kontakter[kontakt.epost] = kontakt
+        self.inmatning = kontakt                                                #Används på rad 382 för att skriva ut vilket kontakt-objekt som har skapats
+
+    def radera_kontakt(self):
+        """En metod som raderar ett kontaktobjekt från register_kontakter"""
+        kontakt = self.inmatning                                                #self.inmatning = kontaktobjekt
+        del self.kontakter[f"{kontakt.förnamn} {kontakt.efternamn}"]
+        telefonnummer = kontakt.telefonnummer
+        del self.kontakter[telefonnummer]
+        epost = kontakt.epost
+        del self.kontakter[epost]
+
+    def ändra_uppgifter(self):
+        """En metod som ändrar ett kontaktobjekts valda uppgifteribut"""
+        kontakt = self.kontakter[self.inmatning[3]]             #self.inmatning[3] = Inmatning: fullständigt namn
+        if self.inmatning[1] == 0:                              #Alternativ ändra telefonnummer
+            del self.kontakter[kontakt.telefonnummer]           
+            self.kontakter[self.inmatning[4]] = kontakt         #self.inmatning[4] = Inmatning: nytt telefonnummer
+        elif self.inmatning[1] == 1:                            #Alternativ ändra epost
+            del self.kontakter[kontakt.epost]                   
+            kontakt.epost = self.inmatning[4]                   #self.inmatning[4] = Inmatning: nytt epost
+            self.kontakter[kontakt.epost] = kontakt           
+        elif self.inmatning[1] == 2:                            #Alternativ ändra adress
+            kontakt.adress = self.inmatning[4]                  #self.inmatning[4] = Inmatning: ny adress
+        self.inmatning = kontakt                                #Används på rad 382 för att skriva ut vilket kontakt-objekt som har ändrats
+
+#=================================================================================================================================================
+#                                                       TKINTER
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+
+class TelefonRegister(tk.Tk):
+    """Skapar en ruta"""
+    def __init__(self):
+        tk.Tk.__init__(self)
+        self.title("Telefonregister")
+        self._sida = None
+        self.byt_sida(Startsida)
+        
+    def byt_sida(self, klass_sida):
+        """Raderar gammal sida och skapar ny"""
+        ny_sida = klass_sida(self)                                                                  #Vald sida.
+        if self._sida is not None:                                                                  #Ifall en sida existerar,
+            self._sida.destroy()                                                                    #radera sidan.
+        self._sida = ny_sida                                                                        #Skapa ny sida med vald sida.
+        tk.Frame(self._sida, height = 25, width = 185).grid(row = 8, column = 1)                    #Denna ram används för att orientera sidornas widgets.
+        tk.Frame(self._sida, height = 75, width = 250).grid(row = 0, column = 0, sticky = tk.E)     #"---------------------------------------------------"
+        tk.Frame(self._sida, height = 75, width = 250).grid(row = 0, column = 3, sticky = tk.W)     #"---------------------------------------------------"
+        self.columnconfigure(index=1, weight=1)                                                     #Gör sidorna skalbara
+        self.rowconfigure(index=1, weight=1)                                                        #"------------------"
+        self._sida.grid(column = 1, row = 1)                                                        #"Visar ny, vald sida"
+
+class Startsida(tk.Frame):
+    def __init__(self, master):                                                                                     #Skapar en sida med uppgifteribut från byt_sida
+        tk.Frame.__init__(self, master)                                                                             #Överskriver sidan ovan (utan att ändra uppgifteribut) för att tillåta ytterligare anpassning
+        tk.Label(self, text="Startsida", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)             #Skapar en titel: Startsida                                                                
+        meny = {"Kör ett register":VäljRegister, "Samkör två register":VäljTvåRegister,                             #Menyalternativ
+                "Skapa ett nytt register":SkapaRegister,"Avsluta":avsluta}                                  
+        i = 1
+        for alternativ, ny_sida in meny.items():                                                                    #Itererar genom Menyalternativ och skapar responsiva knappar
+            tk.Button(self, width = 25, text=alternativ, command=lambda ny_sida=ny_sida: master.byt_sida(ny_sida),  #Alternativ är synligt på knappen; Då knappen klickas på reagerar ny_sida med byt_sida.
+                      activebackground="light grey").grid(row = i, column = 1, pady = 10, padx = 50)
+            i += 1
+            
+class VäljRegister(tk.Frame):
+    def __init__(self, master):                                                                                 
+        tk.Frame.__init__(self, master)                                                                         
+        tk.Label(self, text="Välj register", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)         #Titel 
+        i = 1
+        for register_namn, register_kontakter in register.behållare.items():                                        #Itererar genom register.behållare och skapar responsiva knappar.
+            tk.Button(self, width = 25, text=f"{register_namn[:-4].capitalize()}",                                  #register_namn är synligt på knappen; Då knappen klickas på reagerar ny_sida med byt_sida.
+                      command=lambda register_namn=register_namn: self.clickButton(master, register_namn),
+                      activebackground="light grey").grid(row = i, column = 1, pady = 10)        
+            i += 1
+        tk.Button(self, width = 25, text="Återgå till Startsida",                                                   #Tillbaka till startsida knapp. Existerar på varje sida.
+                  command=lambda: master.byt_sida(Startsida)).grid(row = 7, column = 1, pady = 10)
+        
+    def clickButton(self, master, register_namn):                                                                    
+        register.kontakter = register.behållare[register_namn]                                                      #Sparar det valda registret i register_kontakter
+        register.inmatning = register_namn                                                                          #Sparar det valda registrets namn
+        master.byt_sida(KörRegister)                                                                            
+
+
+class KörRegister(tk.Frame):
+    def __init__(self, master):                     
+        tk.Frame.__init__(self, master)             
+        tk.Label(self, text=f"Kör Registret: {register.inmatning[:-4].capitalize()}",                               #register.inmatning = det valda registrets namn
+                 font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)
+        meny = {"Sök efter kontakt":SökKontakt, "Skapa kontakt":SkapaKontakt, "Ändra kontakt":ÄndraMeny,
+                   "Radera kontakt":RaderaKontakt, "Skriv ut hela registret":SkrivRegister}
+        i = 1
+        for alternativ, ny_sida in meny.items():                                                                    #itererar genom meny och skapar responsiva knappar.
+            tk.Button(self, width = 25, text=alternativ, command=lambda ny_sida=ny_sida: master.byt_sida(ny_sida),  #alternativ är synligt på knappen; Då knappen klickas på reagerar ny_sida med byt_sida.
+                      activebackground="light grey").grid(row = i, column = 1, pady = 10)
+            i += 1
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = 7, column = 1, pady = 10)
+        
+class SökKontakt(tk.Frame): 
+    def __init__(self, master):                     
+        tk.Frame.__init__(self, master)             
+        tk.Label(self, text="Söker efter kontakt", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)                       #Titel
+        tk.Label(self, text = 'Mata in fullständigt namn, eller telefonnummer, eller epostadress').grid(row = 2, column = 1, pady = 10) #Del-titel
+        register.inmatning=tk.StringVar()
+        tk.Entry(self, width = 30, textvariable = register.inmatning).grid(row = 3, column = 1, pady = 10)                              #Inmatningslåda
+        tk.Button(self, width = 25, text = 'Submit', command = lambda: self.submit(master)).grid(row = 4, column = 1, pady = 10)        #Inmatning skickas vidare efter knapptryck
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = 5, column = 1, pady = 10)
+        self.output_label = tk.Label(self, foreground="red")                                                                            #Ifall inmatning ej är godtycklig så presenteras en felkod. Felkoden aktiveras på rad 237.
+        self.output_label.grid(row = 3, column =3, pady = 10, sticky = tk.W)
+        
+    def submit(self, master):
+        inmatning = register.inmatning.get()                                                                                            #Gör inmatning läsbar
+        try:
+            test = register.kontakter[inmatning]                                                                                        #Ifall inmatning är en nyckel i register.behållare, nästa sida
+            register.inmatning = test
+            master.byt_sida(SkrivKontakt)
+        except KeyError:
+            self.output_label.config(text="Kontakt med inmatad uppgift saknas")                                                         #felkoden initieras
+
+class SkapaKontakt(tk.Frame):
+    def __init__(self, master):                     
+        tk.Frame.__init__(self, master)             
+        tk.Label(self, text="Lägger till Kontakt", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)                       #titel
+        register.inmatning = []                                                                                                         #skapar lista, ty många inmatningar
+        meny = ["Mata in efternamn", "Mata in förnamn", "Mata in telefonnummer", "Mata in epostadress", "Mata in hemadress"]
+        i = 1
+        for alternativ in meny:                                                                                                         #itererar genom meny och skapar inmatningsrutor med riktlinjer vid sidan av.
+            tk.Label(self, text = alternativ).grid(row = i, column = 0, pady = 10, sticky = tk.W)
+            inmatning = tk.StringVar()
+            inmatning = tk.Entry(self, width = 30, textvariable = inmatning)
+            inmatning.grid(row = (i), column = 1, pady = 10)
+            register.inmatning.append(inmatning)
+            i += 1
+        self.output_label = tk.Label(self, foreground="red")                                                                            #Ifall inmatning ej är godtycklig så presenteras en felkod. Felkoden aktiveras på rad 286.
+        tk.Button(self, width = 25, text = 'Submit',
+                  command = lambda: self.submit(master)).grid(row = i, column = 1, pady = 10)
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = i+1, column = 1, pady = 10)
+
+    def submit(self, master):
+        i = 0
+        återställ_register = register.inmatning.copy()                                      #Används ifall inmatning ej är godtycklig. Används på rad 284 för att återställa register.inmatning så att den tillåter inmatning igen.
+        for inmatning in register.inmatning:                                                #Itererar genom sig själv för att göra inmatning läsbart.
+            register.inmatning[i] = inmatning.get()
+            i += 1
+        felkoder = [None, "Olämpliga tecken eller siffror", "Olämpliga tecken eller siffror",
+                    "Olämpliga tecken eller bokstäver", "Godkänner endast epost-format", "Olämpliga tecken"]
+        efternamn = felhanteringA.namn(register.inmatning[0])                                       #Skickar iväg för felhantering och tar emot boolsktvärde värde. Om inmatning är ok: True
+        förnamn = felhanteringA.namn(register.inmatning[1])
+        telefonnummer = felhanteringA.telefonnummer(register.inmatning[2])
+        epost = felhanteringA.epost(register.inmatning[3])
+        adress = felhanteringA.adress(register.inmatning[4])
+        n = None
+        if efternamn == False:                                                      #Testar ifall varje inmatning uppnår kriterier för felhantering
+            n = 1
+        elif förnamn == False:
+            n = 2
+        elif telefonnummer == False:
+            n = 3
+        elif epost == False:
+            n = 4
+        elif adress == False:
+            n = 5
+        if n is not None:
+            register.inmatning = återställ_register                                 #återställer för ny inmatning.
+            self.output_label.grid(row = n, column = 3,pady = 10, sticky = tk.W)    #Ifall felinmatning så skrivs det ut en felkod
+            self.output_label.config(text=felkoder[n])
+        else:
+            register.skapa_kontakt()
+            master.byt_sida(SkrivKontakt)
+
+class ÄndraMeny(tk.Frame):
+    def __init__(self, master):        
+        tk.Frame.__init__(self, master)
+        register.inmatning = [register.inmatning]                                                                           #register.inmatning = Valt register
+        tk.Label(self, text=f"Ändrar kontaktuppgifter", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)      #Titel
+        meny = {"Ändra telefonnummer":0, "Ändra epostadress":1, "Ändra hemadress":2}
+        i = 1
+        for alternativ, ny_sida in meny.items():                                                                            #Itererar genom meny och skapar responsiva knappar.
+            tk.Button(self, width = 25, text=alternativ, command=lambda ny_sida=ny_sida: self.clickButton(master, ny_sida), #alternativ är synligt på knappen; Då knappen klickas på reagerar väljs en siffra som motsvarar attributet som ska ändras.
+                      activebackground="light grey").grid(row = i, column = 1, pady = 10)                                   #0:telefonnummer, 1:epostadress 2:hemadress
+            i += 1
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = i, column = 1, pady = 10)
+
+    def clickButton(self, master, ny_sida):
+        if ny_sida == 0:                        #Sparar ned vilket attribut som ska ändras så att det kan användas på nästa sida.
+            register.inmatning.append(0)
+        elif ny_sida == 1:                      
+            register.inmatning.append(1)
+        elif ny_sida == 2:
+            register.inmatning.append(2)
+        master.byt_sida(ÄndraUppgifter)
+
+class ÄndraUppgifter(tk.Frame):
+    def __init__(self, master):     
+        tk.Frame.__init__(self, master)  
+        titlar = ["telefonnummer", "epostadress", "hemadress"]
+        if register.inmatning[1] == 0:      #Ändra telefonnummer
+            titel = titlar[0]
+        elif register.inmatning[1] == 1:    #Ändra epostadress
+            titel = titlar[1]
+        elif register.inmatning[1] == 2:    #ändra hemadress
+            titel = titlar[2]
+        register.inmatning.append(titel)    #titel vald utefter tidigare valt attribut
+        tk.Label(self, text=f"Ändrar {titel}", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)                       #Titel
+        tk.Label(self, text = 'Mata in fullständigt namn').grid(row = 2, column = 0, pady = 10)                                     #Riktlinje till inmatning
+        register.inmatning.append(None)
+        register.inmatning[3]=tk.StringVar()                                                                    
+        tk.Entry(self, width = 30, textvariable = register.inmatning[3]).grid(row = 2, column = 1, pady = 10)                       #Inmatningsruta
+        tk.Button(self, width = 25, text = 'Submit', command = lambda: self.submit(master)).grid(row = 3, column = 1, pady = 10)    #Inmatning skickas vidare efter knapptryck
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = 4, column = 1, pady = 10)
+        self.output_label = tk.Label(self, foreground="red")
+        self.output_label.grid(row = 2, column = 3, pady = 10, sticky = tk.W)
+
+    def submit(self, master):
+        inmatning = register.inmatning[3].get()                         #register.inmatning[3] = inmatning: fullständigt namn
+        boolsktvärde = felhanteringA.namn(inmatning)
+        try:                                                            #Testar ifall inmatningen är godtycklig och ifall kontakten existerar
+            if boolsktvärde == True:
+                test = register.kontakter[inmatning]
+                register.inmatning[3] = inmatning
+                master.byt_sida(ÄndraUppgifter2)                        #Om det finns en kontakt med det namn så forsätt
+            else:
+                self.output_label.config(text="Olämpliga tecken eller siffror")
+        except KeyError:
+            self.output_label.config(text="Kontakt med inmatad uppgift saknas")
+
+class ÄndraUppgifter2(tk.Frame):
+    def __init__(self, master):      
+        tk.Frame.__init__(self, master)
+        tk.Label(self, text=f"Ändrar {register.inmatning[2]}", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)   #register.inmatning[2] = attributet som ändras
+        tk.Label(self, text = f"Mata in nytt {register.inmatning[2]}").grid(row = 2, column = 0, pady = 10)
+        register.inmatning.append(None)
+        register.inmatning[4]=tk.StringVar()
+        tk.Entry(self,  width = 30, textvariable = register.inmatning[4]).grid(row = 2, column = 1, pady = 10)                      #inmatningsruta
+        tk.Button(self, width = 25, text = 'Submit', command = lambda: self.submit(master)).grid(row = 3, column = 1, pady = 10)    #Inmatning skickas vidare efter knapptryck
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = 4, column = 1, pady = 10)
+        self.output_label = tk.Label(self, foreground="red")
+        self.output_label.grid(row = 2, column = 3, pady = 10, sticky = tk.W)    
+
+    def submit(self, master):
+        inmatning = register.inmatning[4].get()                                                                 #register.inmatning [4] = nytt attribut, dvs nytt telefonnummer, ny epost eller ny hemadress.
+        felkoder = ["Olämpliga tecken eller bokstäver", "Godkänner endast epost-format", "Olämpliga tecken"]
+        if register.inmatning[1] == 0:                                                                          #olika felhantering och olika felkoder för de olika attributen som ändras
+            boolsktvärdeVärde = felhanteringA.telefonnummer(inmatning)
+            felkod = felkoder[0]
+        elif register.inmatning[1] == 1:
+            boolsktvärdeVärde = felhanteringA.epost(inmatning)
+            felkod = felkoder[1]
+        elif register.inmatning[1] == 2:
+            boolsktvärdeVärde = felhanteringA.adress(inmatning)
+            felkod = felkoder[2]
+        if boolsktvärdeVärde == True:
+            register.inmatning[4] = inmatning
+            register.ändra_uppgifter()
+            master.byt_sida(SkrivKontakt)
+        else:
+            self.output_label.config(text=felkod)
+
+class SkrivKontakt(tk.Frame):
+    def __init__(self, master):    
+        tk.Frame.__init__(self, master)   
+        menyFrame = tk.Frame(self, height = 25, width = 200)                                            #Skapar ytterligare en ruta för att orientera 
+        menyFrame.grid(row = 0, column = 1, sticky = tk.W)
+        i = 0
+        while i < 99:
+            gridFrame = tk.Frame(menyFrame, height = 25, width = 820/110)                               #Skapar flera rutor inom rutan på rad 385
+            gridFrame.grid(row = 0, column = i)
+            i += 1
+        titlar = {"Efternamn":0, "Förnamn":10, "Telefonnummer":20, "Epost":31, "Adress":73}             #Olika titlar som placeras ut i de olika rutorna från rad 389
+        for titel, grid in options.items():
+            tk.Label(menyFrame, text = option).grid(row = 2, column = grid)
+        textBox = tk.Text(self, height = 25, width = 125)                                               #Textruta som presenterar kontakten
+        textBox.grid(row = 1, column = 1, pady = 10)
+        textBox.insert(tk.END, register.inmatning.utskriftsFormat())
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = 2, column = 1, pady = 10)
+                  
+class RaderaKontakt(tk.Frame):
+    def __init__(self, master):          
+        tk.Frame.__init__(self, master) 
+        tk.Label(self, text="Raderar kontakt", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)       #Titel
+        tk.Label(self, text = 'Mata in fullständigt namn').grid(row = 2, column = 0, pady = 10)                     #Riktlinjer
+        register.inmatning=tk.StringVar()
+        tk.Entry(self, width = 30, textvariable = register.inmatning).grid(row = 2, column = 1, pady = 10)          #Inmatningsruta
+        tk.Button(self, width = 25, text = 'Submit',                                                                #Inmatning skickas vidare efter knapptryck
+                  command = lambda: self.submit(master)).grid(row = 3, column = 1, pady = 10)
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = 4, column = 1, pady = 10)
+        self.output_label = tk.Label(self, foreground="red")
+        self.output_label.grid(row = 2, column = 3, pady = 10, sticky = tk.W)
+
+    def submit(self, master):
+        inmatning = register.inmatning.get()
+        boolsktvärde = felhanteringA.namn(inmatning)
+        try:                                            #P.S.S. som för sök kontakt, runt rad 230
+            if boolsktvärde == True:
+                test = register.kontakter[inmatning]
+                register.inmatning = test
+                register.radera_kontakt()
+                master.byt_sida(SkrivKontakt)
+            else:
+                self.output_label.config(text="Olämpliga tecken eller siffror")    
+        except KeyError:
+            self.output_label.config(text="Kontakt med inmatad uppgift saknas")
+
+class SkrivRegister(tk.Frame):
+    def __init__(self, master):         
+        tk.Frame.__init__(self, master)
+        utskrift = register.formatering_utskrift()                                                                                  #Tar emot en formaterad sträng, strängen innehåller en massa kontakter.
+        if isinstance(register.inmatning, list):                                                                                    #Ifall strängen är en lista så är det en utskrift från samkörning. Därmed annan titel.
+            titel = f"Utskrift av register: {register.inmatning[0][:-4].capitalize()} & {register.inmatning[1][:-4].capitalize()}"  #register.inmatning[0] = titel nummer för valt register 1, register.inmatning[1] = titel för valt register 2.
+        else:
+            titel = f"Utskrift av registret: {register.inmatning[:-4].capitalize()}"                                                #Ifall utskrift från körning av ett register. register.inmatning = titel för valt register
+        tk.Label(self, text = titel, font=(10)).grid(row = 0, column = 1, sticky = tk.S)
+        menyFrame = tk.Frame(self, height = 25, width = 200)                                                                        #P.S.S. som rad 385
+        menyFrame.grid(row = 1, column = 1, sticky = tk.W)
+        i = 0
+        while i < 99:
+            gridFrame = tk.Frame(menyFrame, height = 25, width = 820/110)
+            gridFrame.grid(row = 0, column = i)
+            i += 1
+        titlar = {"Efternamn":0, "Förnamn":10, "Telefonnummer":20, "Epost":31, "Adress":73}
+        for titel, grid in titlar.items():
+            tk.Label(menyFrame, text = titel).grid(row = 2, column = grid)
+        textBox = tk.Text(self, height = 25, width = 125)
+        textBox.grid(row = 3, column = 1)
+        textBox.insert(tk.END, utskrift)
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = 4, column = 1, pady = 10)
+
+class VäljTvåRegister(tk.Frame):
+    def __init__(self, master):         
+        tk.Frame.__init__(self, master)  
+        tk.Label(self, text="Välj det första Registret", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S) #Titel
+        i = 1
+        for register_namn, register_kontakter in register.behållare.items():                                            #Itererar genom register.behållare och skapar responsiva knappar
+            tk.Button(self, width = 25, text=f"{register_namn[:-4].capitalize()}",                                      #register_namn är synligt på knappen; Då knappen klickas sker rad 468.
+                      command=lambda register_namn=register_namn: self.clickButton(master, register_namn),
+                      activebackground="light grey").grid(row = i, column = 1, pady = 10)    
+            i += 1
+        tk.Button(self, width = 25, text="Återgå till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = i, column = 1, pady = 10)
+
+    def clickButton(self, master, register_namn):
+        register.inmatning = [register_namn]                                                                            #Sparar det första registrets namn. register.imatning[0]
+        master.byt_sida(VäljTvåRegister2)
+
+class VäljTvåRegister2(tk.Frame):
+    def __init__(self, master):                     
+        tk.Frame.__init__(self, master)             
+        tk.Label(self, text="Välj det andra Registret", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)      #P.S.S. som rad 457
+        i = 1
+        for register_namn, register_kontakter in register.behållare.items():
+            tk.Button(self, width = 25, text=f"{register_namn[:-4].capitalize()}",
+                      command=lambda register_namn=register_namn: self.clickButton(master, register_namn),
+                      activebackground="light grey").grid(row = i, column = 1, pady = 10)     
+            i += 1
+        tk.Button(self, width = 25, text="Återgå till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = i, column = 1, pady = 10)
+
+    def clickButton(self, master, register_namn):
+        register.inmatning.append(register_namn)                                                                            #Sparar det andra registret. register.inmatning[1]
+        master.byt_sida(TvåRegisterMeny)
+
+class TvåRegisterMeny(tk.Frame):
+    def __init__(self, master):                     
+        tk.Frame.__init__(self, master)             
+        tk.Label(self, text=f"Kör register: {register.inmatning[0][:-4].capitalize()} & {register.inmatning[1][:-4].capitalize()}",         #Titel som visar det två register som körs
+                 font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)
+        meny = {"Samkör två register som union":True, "Samkör två register som snitt":False}                                                
+        i = 1
+        for alternativ, boolsktvärde in meny.items():                                                                                       #Itererar genom register.behållare och skapar responsiva knappar                                      
+            tk.Button(self, width=25, text = alternativ,                                                                                    #True motsvar Union, False motsvarar snitt
+                      command = lambda boolsktvärde=boolsktvärde: self.click(master, boolsktvärde)).grid(row = i, column = 1, pady = 10)
+            i += 1
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = i, column = 1, pady = 10)
+
+    def click(self, master, boolsktvärde):
+        register.inmatning.append(boolsktvärde)                             #När knappen har klickats så sparas motsvarande värde ner.
+        register.formatering_union_snitt()                                  #Det boolska värdet används i metoden formatering_union_snitt()
+        master.byt_sida(SkrivRegister)
+
+class SkapaRegister(tk.Frame):
+    def __init__(self, master):                     
+        tk.Frame.__init__(self, master)             
+        tk.Label(self, text="Skapar nytt register", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)              #Titel
+        tk.Label(self, text = 'Mata in namnet på det nya registret').grid(row = 1, column = 1, pady = 10)                       #Riktlinjer
+        register.inmatning=tk.StringVar()
+        tk.Entry(self, width = 30, textvariable = register.inmatning).grid(row = 2, column = 1, pady = 10)                      #Inmatningsruta
+        tk.Button(self, width = 25, text = 'Submit', command = lambda: self.submit(master)).grid(row = 3, column = 1, pady = 10)
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = 4, column = 1, pady = 10)
+        self.output_label = tk.Label(self, foreground="red")
+        self.output_label.grid(row = 2, column =3, pady = 10, sticky = tk.W)
+
+    def submit(self, master):
+        inmatning = register.inmatning.get()                    #Gör inmatning läsbart.
+        boolsktvärde = felhanteringA.register(inmatning)        #Ifall godtycklig inmatning, True
+        if boolsktvärde == True:
+            try:
+                test = register.behållare[inmatning]            #Testar ifall registret redan finns
+                self.output_label.config(text="Detta register existerar redan")
+            except KeyError:
+                register.inmatning = inmatning                  #Ifall registret inte finns, gå vidare
+                master.byt_sida(SkapaRegisterSkriv)
+        else:
+            self.output_label.config(text="OBS! Avsluta med .txt")           
+
+class SkapaRegisterSkriv(tk.Frame):
+    def __init__(self, master):                     
+        tk.Frame.__init__(self, master)             
+        register.skapa_fil()
+        tk.Label(self, text=f"Namnet på det nya registret: {register.inmatning[:-4].capitalize()}",     #Titelutskrift
+                 font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)
+        tk.Button(self, width = 25, text="Återvänd till Startsida",
+                  command=lambda: master.byt_sida(Startsida)).grid(row = 2, column = 1, pady = 10)
+
+class RegisterError(tk.Frame):
+    def __init__(self, master):                     
+        tk.Frame.__init__(self, master)                 #Ifall någon utav filerna inte är i samma mapp som programmet pekar till så kommer denna sida visas.
+        if register.kontakter is None:
+            errorMessage = "Det finns inte någon textfil: 'register.txt'. Kolla så att alla filer och program ligger i samma mapp."
+
+        else:
+            errorMessage = f"Det finns inte någon textfil: '{register.kontakter}'. Kolla så att alla filer och program ligger i samma mapp."
+        tk.Label(self, text=errorMessage, foreground="red", font = ("20")).grid(row = 0, column = 1, pady = 10, sticky = tk.S) #Errormeddelande
+
+def avsluta(x):
+    register.spara_register()       #Ifall knappen avsluta trycks som finns på startsida klickas, så sparas alla ändringar ner i textfiler och programmet avslutas.
+    register.spara_filer()
+    quit()
+
+def errorFil(app):                  #funktion som körs på rad 566 i huvudprogram. Ifall någon av textfilerna saknas i mapp så blir register.inmatning True och då körs errorsidan.
+    if register.inmatning == True:
+        app.byt_sida(RegisterError)
+  
+if __name__ == "__main__":
+    register = Register()           #Skapar ett register
+    register.läs_register()         #läser register.txt
+    register.läs_filer()            #läser enskilda registerfiler
+    app = TelefonRegister()         #Skapar en ruta telefonregister
+    errorFil(app)
+    app.mainloop()                  #Kör GUI
