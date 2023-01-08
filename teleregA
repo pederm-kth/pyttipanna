@@ -19,9 +19,9 @@ class Kontakt:
         """Strängrepresentation utav kontaktobjekten. Används för att skriva ut"""
         return f"{self.efternamn: <15}{self.förnamn : <15}{self.telefonnummer : <20}{self.epost : <40}{self.adress : <40}".strip()
         
-    def __lt__(self, other):
+    def __lt__(self, annat):
         """En inbyggd dunder/super-metod som anropas då sorted() används inom klassen"""
-        if self.efternamn <= other.efternamn:   #Jämför kontakt-objektens attribut efternamn efter alfabetisk ordning (A till Ö)
+        if self.efternamn <= annat.efternamn:   #Jämför kontakt-objektens attribut efternamn efter alfabetisk ordning (A till Ö)
             return True
         else:
             return False
@@ -32,8 +32,7 @@ class Register:
         """En konstruktor som skapar olika uppgifteributet kopplade till hanteringen av registerna"""
         self.behållare = {}      #Skapar en tom dictionary som anropas då self.behållare inom klass eller register.behållare utanför klass.
         self.kontakter = None    #Skapar en tom variabel som används för att spara temporära värden under programmets gång.
-        self.inmatning = None    #"--------------------------------------------------------------------------------------"
-    
+        self.inmatning = None    #"--------------------------------------------------------------------------------------"  
 
     def läs_register(self):
         """En metod som läser in de olika registerna (textfilerna) från en annan textfil 'register.txt' """
@@ -71,7 +70,7 @@ class Register:
         """En metod som sparar ner de befintliga och eventuella nya register i textfilen 'register.txt'"""
         with open("register.txt", "w", encoding="utf-8") as regFil:
             for register_namn, register_kontakter in self.behållare.items():
-                regFil.write('%s\n' % register_namn)                            #Sparar ner varje register rad för rad i textfilen "register.txt".
+                regFil.write(f"{register_namn}\n")                            #Sparar ner varje register rad för rad i textfilen "register.txt".
     
     def spara_filer(self):
         """En metod som sparar varje ändring som skett i varje enskilt register"""
@@ -79,7 +78,7 @@ class Register:
             with open(register_namn, "w", encoding="utf-8") as fil:
                 register_kontakter = set(register_kontakter.values())           #Eftersom set() är oordnad så tas två av de tredubbla kontaktobjekten bort, kvar blir en instans av kontaktobjektet
                 for kontakt in register_kontakter:
-                    fil.write('%s\n' % kontakt)                                 #Sparar ned varje kontakt rad för rad med format enligt __str__ på rad 14.
+                    fil.write(f"{kontakt}\n")                                 #Sparar ned varje kontakt rad för rad med format enligt __str__ på rad 14.
     
     def skapa_fil(self):
         """En metod som skapar ett nytt register i mainDict och en ny textfil"""
@@ -92,21 +91,21 @@ class Register:
 
     def formatering_union_snitt(self):
         """En metod som formatterar unionen av två dictionaries"""
-        if self.inmatning[2] == True:                                           #self.inmatning[2] = boolskt värde. True ger alternativ Union.
-            register_union = self.behållare[self.inmatning[1]].copy()           #self.inmatning[1] = det andra valda registret. använder copy() så att self.behållare inte ska påverkas utav nästa rad kod.
-            register_union.update(self.behållare[self.inmatning[0]])            #self.inmatning[0] = det första valda registret. OBS! register_union är lika med de två valda registerena, självaste unionen uppstår på rad 113.
-            self.kontakter = register_union                                     #Detta så att register_union kan användas på rad 107.
+        if self.inmatning[2] == True:                                                           #self.inmatning[2] = boolskt värde. True ger alternativ Union.
+            register_union = self.behållare[self.inmatning[1]].copy()                           #self.inmatning[1] = det andra valda registret. använder copy() så att self.behållare inte ska påverkas utav nästa rad kod.
+            register_union.update(self.behållare[self.inmatning[0]])                            #self.inmatning[0] = det första valda registret. OBS! register_union är lika med de två valda registerena, självaste unionen uppstår på rad 113.
+            self.kontakter = register_union                                                     #Detta så att register_union kan användas på rad 107.
         else:                                                               
-            register_snitt = {k: self.behållare[self.inmatning[1]][k]           #register_snitt är lika med snittet av de båda valda registerna
-                              for k in self.behållare[self.inmatning[1]]
-                              if k in self.behållare[self.inmatning[0]]}
-            self.kontakter = register_snitt                                     #Detta så att register_snitt kan användas på rad 107.
+            register_snitt = {register_namn: self.behållare[self.inmatning[1]][register_namn]   #register_snitt är lika med snittet av de båda valda registerna
+                              for register_namn in self.behållare[self.inmatning[1]]
+                              if register_namn in self.behållare[self.inmatning[0]]}
+            self.kontakter = register_snitt                                                     #Detta så att register_snitt kan användas på rad 107.
 
     def formatering_utskrift(self):
         """Från vald register_kontakter så sorteras kontaktobjektens uppgifteribut efternamn efter alfabetisk ordning (A till Ö). Sedan görs register_kontakter till utskriftsformat"""
         register_kontakter_unikt = sorted(set(self.kontakter.values()))         #Ty rad 80 så skrivs endast ett av de sparade kontaktobjekten ut. Här så sker även unionen av de valda registerna. OBS! Snittet påverkas ej.
-        utskrift = ""                                       
-        i=0                                                 
+        utskrift = ""                                                           #På rad 107 så sker även sorteringen efter efternamn p.g.a. sorted(). När sorted() kallas så sorterar den genom ett set() av objekt, därmed används super/dundermetoden på rad 22.
+        i=0                                                   
         for kontakt in register_kontakter_unikt:                                #loopen förvandlar från set till ett utskriftsbart strängformat
             utskrift =f"{utskrift}\n{kontakt.efternamn: <15}{kontakt.förnamn : <15}{kontakt.telefonnummer : <20}{kontakt.epost : <40}{kontakt.adress : <40}".strip()
             i += 1                                          
@@ -118,7 +117,7 @@ class Register:
         self.kontakter[f"{kontakt.förnamn} {kontakt.efternamn}"] = kontakt
         self.kontakter[kontakt.telefonnummer] = kontakt
         self.kontakter[kontakt.epost] = kontakt
-        self.inmatning = kontakt                                                #Används på rad 382 för att skriva ut vilket kontakt-objekt som har skapats
+        self.inmatning = [kontakt, 0]                                           #Används på rad 382 för att skriva ut vilket kontakt-objekt som har skapats
 
     def radera_kontakt(self):
         """En metod som raderar ett kontaktobjekt från register_kontakter"""
@@ -128,20 +127,22 @@ class Register:
         del self.kontakter[telefonnummer]
         epost = kontakt.epost
         del self.kontakter[epost]
+        self.inmatning = [kontakt, 1]
 
     def ändra_uppgifter(self):
         """En metod som ändrar ett kontaktobjekts valda uppgifteribut"""
         kontakt = self.kontakter[self.inmatning[3]]             #self.inmatning[3] = Inmatning: fullständigt namn
         if self.inmatning[1] == 0:                              #Alternativ ändra telefonnummer
-            del self.kontakter[kontakt.telefonnummer]           
-            self.kontakter[self.inmatning[4]] = kontakt         #self.inmatning[4] = Inmatning: nytt telefonnummer
+            del self.kontakter[kontakt.telefonnummer]           #Tar bort gamla nyckeln för telefonnumret 
+            kontakt.telefonnummer = self.inmatning[4]           #self.inmatning[4] = Inmatning: nytt telefonnummer
+            self.kontakter[kontakt.telefonnummer] = kontakt     #Lägger till nya telefonnumret som nyckel
         elif self.inmatning[1] == 1:                            #Alternativ ändra epost
-            del self.kontakter[kontakt.epost]                   
+            del self.kontakter[kontakt.epost]                   #Tar bort gamla nyckeln för epostadressen 
             kontakt.epost = self.inmatning[4]                   #self.inmatning[4] = Inmatning: nytt epost
-            self.kontakter[kontakt.epost] = kontakt           
+            self.kontakter[kontakt.epost] = kontakt             #Lägger till nya epostadressen som nyckel
         elif self.inmatning[1] == 2:                            #Alternativ ändra adress
             kontakt.adress = self.inmatning[4]                  #self.inmatning[4] = Inmatning: ny adress
-        self.inmatning = kontakt                                #Används på rad 382 för att skriva ut vilket kontakt-objekt som har ändrats
+        self.inmatning = [kontakt, self.inmatning[2]]           #Används på rad 382 för att skriva ut vilket kontakt-objekt som har ändrats
 
 #=================================================================================================================================================
 #                                                       TKINTER
@@ -231,7 +232,7 @@ class SökKontakt(tk.Frame):
         inmatning = register.inmatning.get()                                                                                            #Gör inmatning läsbar
         try:
             test = register.kontakter[inmatning]                                                                                        #Ifall inmatning är en nyckel i register.behållare, nästa sida
-            register.inmatning = test
+            register.inmatning = [test, None]
             master.byt_sida(SkrivKontakt)
         except KeyError:
             self.output_label.config(text="Kontakt med inmatad uppgift saknas")                                                         #felkoden initieras
@@ -239,7 +240,7 @@ class SökKontakt(tk.Frame):
 class SkapaKontakt(tk.Frame):
     def __init__(self, master):                     
         tk.Frame.__init__(self, master)             
-        tk.Label(self, text="Lägger till Kontakt", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)                       #titel
+        tk.Label(self, text="Skapar kontakt", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)                       #titel
         register.inmatning = []                                                                                                         #skapar lista, ty många inmatningar
         meny = ["Mata in efternamn", "Mata in förnamn", "Mata in telefonnummer", "Mata in epostadress", "Mata in hemadress"]
         i = 1
@@ -381,22 +382,32 @@ class ÄndraUppgifter2(tk.Frame):
 
 class SkrivKontakt(tk.Frame):
     def __init__(self, master):    
-        tk.Frame.__init__(self, master)   
+        tk.Frame.__init__(self, master)
+        titlar = ["Skapad kontakt", "Raderad kontakt", "Sökt kontakt"]
+        if register.inmatning[1] == 0:
+            titel = titlar[0]
+        elif register.inmatning[1] == 1:
+            titel = titlar[1]
+        elif isinstance(register.inmatning[1], str):
+            titel = f"Ändrat {register.inmatning[1]} för följande kontakt"
+        else:
+            titel = titlar[2]
+        tk.Label(self, text=f"{titel}", font=(20)).grid(row = 0, column = 1, pady = 10, sticky = tk.S)   #register.inmatning[2] = attributet som ändras
         menyFrame = tk.Frame(self, height = 25, width = 200)                                            #Skapar ytterligare en ruta för att orientera 
-        menyFrame.grid(row = 0, column = 1, sticky = tk.W)
+        menyFrame.grid(row = 1, column = 1, sticky = tk.W)
         i = 0
         while i < 99:
             gridFrame = tk.Frame(menyFrame, height = 25, width = 820/110)                               #Skapar flera rutor inom rutan på rad 385
             gridFrame.grid(row = 0, column = i)
             i += 1
         titlar = {"Efternamn":0, "Förnamn":10, "Telefonnummer":20, "Epost":31, "Adress":73}             #Olika titlar som placeras ut i de olika rutorna från rad 389
-        for titel, grid in options.items():
-            tk.Label(menyFrame, text = option).grid(row = 2, column = grid)
+        for titel, grid in titlar.items():
+            tk.Label(menyFrame, text = titel).grid(row = 2, column = grid)
         textBox = tk.Text(self, height = 25, width = 125)                                               #Textruta som presenterar kontakten
-        textBox.grid(row = 1, column = 1, pady = 10)
-        textBox.insert(tk.END, register.inmatning.utskriftsFormat())
+        textBox.grid(row = 2, column = 1, pady = 10)
+        textBox.insert(tk.END, register.inmatning[0].utskriftsFormat())
         tk.Button(self, width = 25, text="Återvänd till Startsida",
-                  command=lambda: master.byt_sida(Startsida)).grid(row = 2, column = 1, pady = 10)
+                  command=lambda: master.byt_sida(Startsida)).grid(row = 3, column = 1, pady = 10)
                   
 class RaderaKontakt(tk.Frame):
     def __init__(self, master):          
